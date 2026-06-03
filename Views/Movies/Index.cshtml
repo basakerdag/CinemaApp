@@ -1,0 +1,188 @@
+@model List<CinemaApp.Models.Movie>
+@{
+    ViewData["Title"] = "Movies";
+}
+
+<div class="py-5">
+    <div class="container">
+
+        <div class="section-header mb-4">
+            <div class="section-label">Collection</div>
+            <h1 class="section-title">ALL MOVIES</h1>
+            <p style="color:var(--text-muted)">@ViewBag.TotalCount movies found</p>
+        </div>
+
+        <form asp-action="Index" method="get" class="filter-bar mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <div class="position-relative">
+                        <i class="bi bi-search position-absolute" style="left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);z-index:1"></i>
+                        <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Movie title or director..." style="padding-left:40px!important">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="genreId" class="form-select">
+                        <option value="">All Genres</option>
+                        @foreach (var item in (ViewBag.Genres as Microsoft.AspNetCore.Mvc.Rendering.SelectList ?? new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new List<object>())))
+                        {
+                            <option value="@item.Value" selected="@(item.Value == ViewBag.GenreId?.ToString())">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select">
+                        <option value="" selected="@(ViewBag.Sort == null)">Recently Added</option>
+                        <option value="rating" selected="@(ViewBag.Sort == "rating")">By IMDB Rating</option>
+                        <option value="year_desc" selected="@(ViewBag.Sort == "year_desc")">Newest Year</option>
+                        <option value="year_asc" selected="@(ViewBag.Sort == "year_asc")">Oldest Year</option>
+                        <option value="title" selected="@(ViewBag.Sort == "title")">A to Z</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-filter me-1"></i> Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Any())
+        {
+            <div class="row g-4">
+                @foreach (var movie in Model)
+                {
+                    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                        <div class="movie-card">
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                                {
+                                    <img src="@movie.PosterUrl" alt="@movie.Title" loading="lazy">
+                                }
+                                else
+                                {
+                                    <div class="movie-poster-placeholder">🎬<span style="font-size:.65rem;font-family:sans-serif;padding:0 8px;text-align:center">@movie.Title</span></div>
+                                }
+
+                                <!-- Hover overlay: Details + Favorite buttons -->
+                                <div class="movie-poster-overlay" style="flex-direction:column;gap:10px">
+                                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id"
+                                       class="btn btn-sm btn-accent px-3">
+                                        <i class="bi bi-eye me-1"></i>Details
+                                    </a>
+                                    @if (Context.Session.GetString("Username") != null)
+                                    {
+                                        <form asp-controller="Favorites" asp-action="Toggle" method="post" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="movieId" value="@movie.Id" />
+                                            <button type="submit" class="btn btn-sm fav-inactive px-3">
+                                                <i class="bi bi-heart me-1"></i>Favorite
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Account" asp-action="Login"
+                                           class="btn btn-sm fav-inactive px-3">
+                                            <i class="bi bi-heart me-1"></i>Favorite
+                                        </a>
+                                    }
+                                </div>
+
+                                @if (movie.IsFeatured)
+                                {
+                                    <div class="movie-featured-badge">Featured</div>
+                                }
+                                @if (movie.ImdbRating.HasValue)
+                                {
+                                    <div class="movie-rating"><i class="bi bi-star-fill"></i> @movie.ImdbRating</div>
+                                }
+                            </div>
+                            <div class="movie-body">
+                                <div class="movie-genre">@movie.Genre?.Name</div>
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                                    <div class="movie-title">@movie.Title</div>
+                                </a>
+                                <div class="movie-meta">@movie.Year @(movie.Duration.HasValue ? $"• {movie.Duration} min" : "")</div>
+                            </div>
+                            @if (Context.Session.GetString("IsAdmin") == "true")
+                            {
+                                <div class="px-3 pb-3 d-flex gap-2">
+                                    <a asp-controller="Movies" asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-sm btn-outline-secondary flex-fill">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-controller="Movies" asp-action="Delete" asp-route-id="@movie.Id" method="post" class="flex-fill"
+                                          onsubmit="return confirm('Are you sure you want to delete this movie?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav class="mt-5 d-flex justify-content-center">
+                    <ul class="pagination gap-1">
+                        @if (ViewBag.CurrentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-search="@ViewBag.Search"
+                                   asp-route-genreId="@ViewBag.GenreId"
+                                   asp-route-sort="@ViewBag.Sort"
+                                   asp-route-page="@(ViewBag.CurrentPage - 1)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        }
+                        @for (int p = 1; p <= ViewBag.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-search="@ViewBag.Search"
+                                   asp-route-genreId="@ViewBag.GenreId"
+                                   asp-route-sort="@ViewBag.Sort"
+                                   asp-route-page="@p">@p</a>
+                            </li>
+                        }
+                        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-search="@ViewBag.Search"
+                                   asp-route-genreId="@ViewBag.GenreId"
+                                   asp-route-sort="@ViewBag.Sort"
+                                   asp-route-page="@(ViewBag.CurrentPage + 1)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <div style="font-size:4rem;margin-bottom:16px">🎬</div>
+                <h4 class="font-bebas" style="color:var(--text-muted)">No Movies Found</h4>
+                <p style="color:var(--text-muted)">Try different search criteria.</p>
+                <a asp-action="Index" class="btn btn-accent mt-3">See All Movies</a>
+            </div>
+        }
+
+        @if (Context.Session.GetString("IsAdmin") == "true")
+        {
+            <div class="mt-4">
+                <a asp-controller="Movies" asp-action="Create" class="btn btn-accent">
+                    <i class="bi bi-plus-lg me-2"></i>Add New Movie
+                </a>
+            </div>
+        }
+    </div>
+</div>

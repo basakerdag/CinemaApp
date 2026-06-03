@@ -1,0 +1,225 @@
+@model CinemaApp.Models.Movie
+@{
+    ViewData["Title"] = Model.Title;
+    var similar = ViewBag.Similar as List<CinemaApp.Models.Movie> ?? new();
+    double avgRating = Model.Reviews.Any() ? Model.Reviews.Average(r => r.Rating) : 0;
+}
+
+<div class="detail-hero">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-md-3">
+                @if (!string.IsNullOrEmpty(Model.PosterUrl))
+                {
+                    <img src="@Model.PosterUrl" alt="@Model.Title" class="detail-poster img-fluid">
+                }
+                else
+                {
+                    <div class="movie-poster-placeholder rounded-3" style="min-height:380px;font-size:4rem;">🎬</div>
+                }
+            </div>
+            <div class="col-md-9">
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb" style="background:none;padding:0;font-size:.85rem">
+                        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-accent text-decoration-none">Home</a></li>
+                        <li class="breadcrumb-item"><a asp-controller="Movies" asp-action="Index" class="text-muted text-decoration-none">Movies</a></li>
+                        <li class="breadcrumb-item active text-muted">@Model.Title</li>
+                    </ol>
+                </nav>
+
+                <span class="meta-badge mb-3 d-inline-flex">@Model.Genre?.Icon @Model.Genre?.Name</span>
+
+                <h1 class="detail-title">@Model.Title</h1>
+
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="meta-badge"><i class="bi bi-calendar3 me-1"></i>@Model.Year</span>
+                    @if (Model.Duration.HasValue)
+                    {
+                        <span class="meta-badge"><i class="bi bi-clock me-1"></i>@Model.Duration min</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Language))
+                    {
+                        <span class="meta-badge"><i class="bi bi-translate me-1"></i>@Model.Language</span>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Country))
+                    {
+                        <span class="meta-badge"><i class="bi bi-geo-alt me-1"></i>@Model.Country</span>
+                    }
+                </div>
+
+                <div class="d-flex align-items-center gap-4 mb-4">
+                    @if (Model.ImdbRating.HasValue)
+                    {
+                        <div>
+                            <div class="text-muted" style="font-size:.75rem;text-transform:uppercase;letter-spacing:1px">IMDB</div>
+                            <div class="detail-rating">⭐ @Model.ImdbRating</div>
+                        </div>
+                    }
+                    @if (Model.Reviews.Any())
+                    {
+                        <div>
+                            <div class="text-muted" style="font-size:.75rem;text-transform:uppercase;letter-spacing:1px">User Rating</div>
+                            <div class="detail-rating" style="color:var(--accent)">🎭 @avgRating.ToString("F1")</div>
+                        </div>
+                        <div>
+                            <div class="text-muted" style="font-size:.75rem;text-transform:uppercase;letter-spacing:1px">Reviews</div>
+                            <div class="detail-rating" style="color:var(--text-muted);font-size:1.8rem">@Model.Reviews.Count</div>
+                        </div>
+                    }
+                </div>
+
+                <p style="color:var(--text-secondary);font-size:1rem;line-height:1.8;max-width:600px" class="mb-4">@Model.Description</p>
+
+                <div class="row g-3 mb-4">
+                    @if (!string.IsNullOrEmpty(Model.Director))
+                    {
+                        <div class="col-auto">
+                            <div class="text-muted" style="font-size:.75rem;text-transform:uppercase;letter-spacing:1px">Director</div>
+                            <div class="text-light fw-600">@Model.Director</div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Cast))
+                    {
+                        <div class="col-12">
+                            <div style="color:var(--text-primary);font-weight:600">@Model.Director</div>
+                            <div style="color:var(--text-primary)">@Model.Cast</div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex gap-3 flex-wrap">
+                    @if (!string.IsNullOrEmpty(Model.TrailerUrl))
+                    {
+                        <a href="@Model.TrailerUrl" target="_blank" class="btn btn-accent px-4 py-2">
+                            <i class="bi bi-play-fill me-2"></i>Watch Trailer
+                        </a>
+                    }
+                    @if (Context.Session.GetString("Username") != null)
+                    {
+                        <form asp-controller="Favorites" asp-action="Toggle" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="movieId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-outline-light px-4 py-2">
+                                <i class="bi bi-heart me-2"></i>Add to Favorites
+                            </button>
+                        </form>
+                    }
+                    @if (Context.Session.GetString("IsAdmin") == "true")
+                    {
+                        <a asp-controller="Movies" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning px-4 py-2">
+                            <i class="bi bi-pencil Bona me-2"></i>Edit
+                        </a>
+                    }
+                    <a asp-controller="Movies" asp-action="Index" class="btn btn-outline-light px-4 py-2">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-5">
+
+        <div class="col-lg-8">
+            <div class="section-header">
+                <div class="section-label">User Reviews</div>
+                <h3 class="section-title" style="font-size:1.6rem">REVIEWS (@Model.Reviews.Count)</h3>
+            </div>
+
+            @if (Model.Reviews.Any())
+            {
+                foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+                {
+                    <div class="review-card">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <span class="review-author"><i class="bi bi-person-circle me-1"></i>@review.ReviewerName</span>
+                                <span class="text-muted ms-2" style="font-size:.8rem">@review.CreatedAt.ToString("dd.MM.yyyy")</span>
+                            </div>
+                            <div class="review-stars">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star")" style="font-size:.7rem"></i>
+                                }
+                                <span class="text-gold ms-1 fw-bold">@review.Rating/10</span>
+                            </div>
+                        </div>
+                        <p class="mb-0 text-muted">@review.Content</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-chat-dots" style="font-size:2rem;display:block;margin-bottom:12px"></i>
+                    No reviews yet. Be the first to review!
+                </div>
+            }
+
+            <div class="bg-dark-card rounded-custom p-4 mt-4">
+                <h5 class="font-bebas mb-3" style="font-size:1.2rem;letter-spacing:1px">WRITE A REVIEW</h5>
+                <form asp-controller="Movies" asp-action="AddReview" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="movieId" value="@Model.Id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Your Name</label>
+                            <input type="text" name="reviewerName" class="form-control" placeholder="You can leave it anonymous">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Rating (1–10)</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="range" id="ratingInput" name="rating" min="1" max="10" value="7" class="form-range flex-fill" style="accent-color:var(--accent)">
+                                <span id="ratingDisplay" class="text-accent fw-bold" style="min-width:40px">7/10</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Your Review</label>
+                            <textarea name="content" class="form-control" rows="3" placeholder="Share your thoughts about this movie..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-accent px-4">
+                                <i class="bi bi-send me-2"></i>Submit Review
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="section-header">
+                <div class="section-label">Similar Content</div>
+                <h3 class="section-title" style="font-size:1.4rem">SIMILAR MOVIES</h3>
+            </div>
+            @foreach (var s in similar)
+            {
+                <a asp-controller="Movies" asp-action="Details" asp-route-id="@s.Id" class="text-decoration-none">
+                    <div class="d-flex gap-3 mb-3 p-2 rounded-3" style="background:var(--bg-card);border:1px solid var(--border);transition:all .2s"
+                         onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+                        <div style="width:60px;flex-shrink:0">
+                            @if (!string.IsNullOrEmpty(s.PosterUrl))
+                            {
+                                <img src="@s.PosterUrl" alt="@s.Title" class="rounded-2" style="width:60px;height:90px;object-fit:cover">
+                            }
+                            else
+                            {
+                                <div class="rounded-2 d-flex align-items-center justify-content-center" style="width:60px;height:90px;background:var(--border);font-size:1.5rem">🎬</div>
+                            }
+                        </div>
+                        <div class="d-flex flex-column justify-content-center">
+                            <div class="font-bebas text-light" style="font-size:1rem;letter-spacing:.5px">@s.Title</div>
+                            <div class="text-muted" style="font-size:.8rem">@s.Year</div>
+                            @if (s.ImdbRating.HasValue)
+                            {
+                                <div class="text-gold" style="font-size:.8rem">⭐ @s.ImdbRating</div>
+                            }
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</div>

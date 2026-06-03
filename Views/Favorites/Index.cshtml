@@ -1,0 +1,73 @@
+@model List<CinemaApp.Models.Favorite>
+@{
+    ViewData["Title"] = "My Favorites";
+}
+
+<div class="container py-5">
+    <div class="section-header">
+        <div class="section-label">My Collection</div>
+        <h1 class="section-title">MY FAVORITES</h1>
+        <p style="color:var(--text-muted)">@Model.Count favorite movie@(Model.Count != 1 ? "s" : "")</p>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var fav in Model)
+            {
+                var movie = fav.Movie!;
+                <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                    <div class="movie-card">
+                        <div class="movie-poster">
+                            @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                            {
+                                <img src="@movie.PosterUrl" alt="@movie.Title" loading="lazy">
+                            }
+                            else
+                            {
+                                <div class="movie-poster-placeholder">🎬</div>
+                            }
+                            <div class="movie-poster-overlay">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id"
+                                   class="btn btn-sm btn-accent px-3">
+                                    <i class="bi bi-eye me-1"></i>Details
+                                </a>
+                            </div>
+                            @if (movie.ImdbRating.HasValue)
+                            {
+                                <div class="movie-rating"><i class="bi bi-star-fill"></i> @movie.ImdbRating</div>
+                            }
+                            <!-- Remove from favorites button -->
+                            <form asp-controller="Favorites" asp-action="Toggle" method="post"
+                                  style="position:absolute;bottom:8px;left:8px">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="movieId" value="@movie.Id" />
+                                <button type="submit" class="fav-btn fav-btn--active" title="Remove from favorites">
+                                    <i class="bi bi-heart-fill"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="movie-body">
+                            <div class="movie-genre">@movie.Genre?.Name</div>
+                            <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                                <div class="movie-title" style="color:var(--text-primary)">@movie.Title</div>
+                            </a>
+                            <div class="movie-meta">@movie.Year &bull; Added: @fav.AddedAt.ToString("dd.MM.yy")</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div style="font-size:4rem;margin-bottom:16px;opacity:.4">💔</div>
+            <h4 class="font-bebas" style="color:var(--text-primary);font-size:1.6rem;letter-spacing:1px">No Favorite Movies Yet</h4>
+            <p style="color:var(--text-muted)">Browse movies and click the ❤️ button to add them to your favorites.</p>
+            <a asp-controller="Movies" asp-action="Index" class="btn btn-accent mt-3 px-4">
+                <i class="bi bi-film me-2"></i>Explore Movies
+            </a>
+        </div>
+    }
+</div>

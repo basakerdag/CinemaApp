@@ -1,0 +1,42 @@
+@model List<CinemaApp.Models.Genre>
+@{
+    ViewData["Title"] = "Movie Genres";
+}
+
+<div class="container py-5">
+    <div class="section-header">
+        <div class="section-label">Categories</div>
+        <h1 class="section-title">MOVIE GENRES</h1>
+        <p class="text-muted">Choose your favorite genre and explore movies</p>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var genre in Model)
+        {
+            <div class="col-6 col-md-4 col-lg-3">
+                <a asp-controller="Movies" asp-action="Index" asp-route-genreId="@genre.Id" class="genre-card">
+                    <span class="genre-icon">@genre.Icon</span>
+                    <div class="genre-name">@genre.Name</div>
+                    <div class="genre-count">@genre.Movies.Count movies</div>
+                    @if (!string.IsNullOrEmpty(genre.Description))
+                    {
+                        <div class="text-muted mt-2" style="font-size:.8rem">@genre.Description</div>
+                    }
+                </a>
+            </div>
+        }
+
+        @if (Context.Session.GetString("IsAdmin") == "true")
+        {
+            <div class="col-6 col-md-4 col-lg-3">
+                <a asp-controller="Genres" asp-action="Create"
+                   style="min-height:160px;border:2px dashed var(--border);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-muted);text-decoration:none;transition:all .3s"
+                   onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+                    <span style="font-size:2rem">+</span>
+                    <span style="font-size:.85rem;font-weight:600">Add New Genre</span>
+                </a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="text-center mb-4">
+            <div style="font-size:2.5rem;margin-bottom:8px">🎬</div>
+            <h1 class="auth-title">LOGIN</h1>
+            <p class="text-muted small">Sign in to your CinemaApp account</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger border-0 rounded-3 mb-4" style="background:rgba(220,53,69,0.15);color:#f08080;border-color:rgba(220,53,69,0.3)!important">
+                <i class="bi bi-exclamation-circle me-2"></i>@ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="username" required autocomplete="username" />
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+            <button type="submit" class="btn btn-accent w-100 py-2 fw-600">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <span class="text-muted small">Don't have an account?</span>
+            <a asp-controller="Account" asp-action="Register" class="text-accent text-decoration-none small fw-600 ms-1">Register</a>
+        </div>
+
+        <hr class="my-4 border-custom">
+        <div class="text-muted small text-center">
+            <i class="bi bi-info-circle me-1"></i>
+            Test admin login: <code style="color:var(--accent)">admin</code> / <code style="color:var(--accent)">Admin123!</code>
+        </div>
+    </div>
+</div>

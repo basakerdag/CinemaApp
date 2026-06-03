@@ -1,0 +1,206 @@
+@model List<CinemaApp.Models.Genre>
+@{
+    ViewData["Title"] = "Home";
+    var featured = ViewBag.Featured as List<CinemaApp.Models.Movie> ?? new();
+    var recent = ViewBag.Recent as List<CinemaApp.Models.Movie> ?? new();
+    var topRated = ViewBag.TopRated as List<CinemaApp.Models.Movie> ?? new();
+    var genres = ViewBag.Genres as List<CinemaApp.Models.Genre> ?? new();
+}
+
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6 hero-content">
+                <div class="hero-badge">
+                    <i class="bi bi-star-fill"></i>
+                    The Best Movies Are Here
+                </div>
+                <h1 class="hero-title">
+                    THE BEST<span>OF</span><br>
+                    CINEMA<br>
+                    <span>MOVIES</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Discover your favorite movies among thousands of choices, rate them, and add them to your watchlist.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a asp-controller="Movies" asp-action="Index" class="btn btn-accent px-4 py-2">
+                        <i class="bi bi-play-fill me-2"></i>Explore Movies
+                    </a>
+                    <a asp-controller="Genres" asp-action="Index" class="btn btn-outline-light px-4 py-2">
+                        <i class="bi bi-grid me-2"></i>Browse Genres
+                    </a>
+                </div>
+            </div>
+            @if (featured.Any())
+            {
+                <div class="col-lg-6 mt-5 mt-lg-0">
+                    <div class="row g-3">
+                        @foreach (var movie in featured.Take(3))
+                        {
+                            <div class="col-4">
+                                <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                                    <div class="rounded-3 overflow-hidden" style="aspect-ratio:2/3; border: 1px solid var(--border);">
+                                        @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                                        {
+                                            <img src="@movie.PosterUrl" alt="@movie.Title" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+                                        }
+                                        else
+                                        {
+                                            <div class="movie-poster-placeholder">🎬</div>
+                                        }
+                                    </div>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="stats-strip">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">@ViewBag.TotalMovies</div>
+                    <div class="stat-label">Movies</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">@ViewBag.TotalGenres</div>
+                    <div class="stat-label">Genres</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">HD</div>
+                    <div class="stat-label">Quality</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-item">
+                    <div class="stat-number">★9.3</div>
+                    <div class="stat-label">Highest Rating</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="section-header d-flex justify-content-between align-items-end">
+            <div>
+                <div class="section-label">Most Popular</div>
+                <h2 class="section-title">TOP RATED MOVIES</h2>
+            </div>
+            <a asp-controller="Movies" asp-action="Index" asp-route-sort="rating" class="btn btn-sm btn-outline-light">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-4">
+            @foreach (var movie in topRated)
+            {
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                        <div class="movie-card">
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                                {
+                                    <img src="@movie.PosterUrl" alt="@movie.Title" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">
+                                }
+                                else
+                                {
+                                    <div class="movie-poster-placeholder">🎬<span style="font-size:.7rem;font-family:sans-serif">@movie.Title</span></div>
+                                }
+                                @if (movie.ImdbRating.HasValue)
+                                {
+                                    <div class="movie-rating"><i class="bi bi-star-fill"></i> @movie.ImdbRating</div>
+                                }
+                            </div>
+                            <div class="movie-body">
+                                <div class="movie-genre">@movie.Genre?.Name</div>
+                                <div class="movie-title">@movie.Title</div>
+                                <div class="movie-meta">@movie.Year @(movie.Duration.HasValue ? $"• {movie.Duration} min" : "")</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="py-5" style="background: rgba(255,255,255,0.01);">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Categories</div>
+            <h2 class="section-title">WATCH BY GENRES</h2>
+        </div>
+        <div class="row g-3">
+            @foreach (var genre in genres)
+            {
+                <div class="col-6 col-md-3 col-lg-3">
+                    <a asp-controller="Movies" asp-action="Index" asp-route-genreId="@genre.Id" class="genre-card">
+                        <span class="genre-icon">@genre.Icon</span>
+                        <div class="genre-name">@genre.Name</div>
+                        <div class="genre-count">@genre.Movies.Count movies</div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="section-header d-flex justify-content-between align-items-end">
+            <div>
+                <div class="section-label">Recently Added</div>
+                <h2 class="section-title">LATEST MOVIES</h2>
+            </div>
+            <a asp-controller="Movies" asp-action="Index" class="btn btn-sm btn-outline-light">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="row g-4">
+            @foreach (var movie in recent.Take(4))
+            {
+                <div class="col-6 col-lg-3">
+                    <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id" class="text-decoration-none">
+                        <div class="movie-card">
+                            <div class="movie-poster">
+                                @if (!string.IsNullOrEmpty(movie.PosterUrl))
+                                {
+                                    <img src="@movie.PosterUrl" alt="@movie.Title" loading="lazy">
+                                }
+                                else
+                                {
+                                    <div class="movie-poster-placeholder">🎬</div>
+                                }
+                                @if (movie.IsFeatured)
+                                {
+                                    <div class="movie-featured-badge">Featured</div>
+                                }
+                                @if (movie.ImdbRating.HasValue)
+                                {
+                                    <div class="movie-rating"><i class="bi bi-star-fill"></i> @movie.ImdbRating</div>
+                                }
+                            </div>
+                            <div class="movie-body">
+                                <div class="movie-genre">@movie.Genre?.Name</div>
+                                <div class="movie-title">@movie.Title</div>
+                                <div class="movie-meta">@movie.Year • @movie.Director</div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
